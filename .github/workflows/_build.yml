@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        required: true
+        type: string
+      ref:
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build_server:
+    name: Build server image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          ref: "${{ inputs.ref }}"
+
+      - name: Setup go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5
+        with:
+          go-version-file: "./server/go.mod"
+          cache: false
+      - name: Generate backend license text
+        working-directory: "./server"
+        run: |
+          go install github.com/google/go-licenses@latest
+          go-licenses report --ignore github.com/bradenrayhorn/nunc --confidence_threshold 0.85 --template ./licenses.tpl --logtostderr=false ./... > ./licenses.txt
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3
+        with:
+          platforms: 'arm64,amd64'
+
+      - name: Login to registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3
+
+      - name: Build and push
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6
+        with:
+          push: true
+          provenance: false
+          context: "."
+          tags: "${{ inputs.tags }}"
+          platforms: linux/amd64,linux/arm64
+

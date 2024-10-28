@@ -1,0 +1,15 @@
+name: Build image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build.yml
+    permissions:
+      packages: write
+    with:
+      tags: ghcr.io/bradenrayhorn/nunc:next,ghcr.io/bradenrayhorn/nunc:next-${{ github.sha }}
+
