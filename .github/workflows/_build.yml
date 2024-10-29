@@ -29,7 +29,6 @@ jobs:
           go-version-file: "./go.mod"
           cache: false
       - name: Generate backend license text
-        working-directory: "./server"
         run: |
           go install github.com/google/go-licenses@latest
           go-licenses report --ignore github.com/bradenrayhorn/nunc --confidence_threshold 0.85 --template ./licenses.tpl --logtostderr=false ./... > ./licenses.txt
