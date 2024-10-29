@@ -44,7 +44,7 @@ func connectAndRunWorker(runner runner, state *serverState, hetzner *hetzner, gi
 
 	go func() {
 		// if the server is brand new, wait a little bit for the ssh server to be ready
-		if time.Now().Sub(runner.createdAt) < 11*time.Second {
+		if time.Since(runner.createdAt) < 11*time.Second {
 			time.Sleep(11 * time.Second)
 		}
 
@@ -136,7 +136,7 @@ func attemptConnectAndRunWorker(runner runner, key sshKey, githubClient *githubC
 		return fmt.Errorf("open session: %w", err)
 	}
 
-	defer session.Close()
+	defer func() { _ = session.Close() }()
 	var out bytes.Buffer
 	var stdErr bytes.Buffer
 	session.Stdout = &out

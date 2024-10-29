@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,7 +15,8 @@ func main() {
 
 	config, err := newConfig()
 	if err != nil {
-		panic(err)
+		log.Fatalf("load config: %s", err)
+		return
 	}
 
 	// start webhook listener
@@ -24,12 +26,14 @@ func main() {
 
 	hetzner, err := newHetzner(config.hetznerToken)
 	if err != nil {
-		panic(err)
+		log.Fatalf("create hetzner client: %s", err)
+		return
 	}
 
 	githubClient, err := newGithubClient(config.githubToken, config.githubRepository)
 	if err != nil {
-		panic(err)
+		log.Fatalf("create github client: %s", err)
+		return
 	}
 
 	state := &serverState{
@@ -39,7 +43,9 @@ func main() {
 	startCleanupJob(state, hetzner, githubClient)
 
 	handler := newHttpHandler(config, state, hetzner, githubClient)
-	go http.ListenAndServe(":"+config.port, handler)
+	go func() {
+		_ = http.ListenAndServe(":"+config.port, handler)
+	}()
 
 	<-c
 	slog.Info("shutting down")
@@ -74,7 +80,6 @@ func doCleanup(state *serverState, hetzner *hetzner, githubClient *githubClient)
 	defer state.mutex.Unlock()
 
 	for id, runner := range state.runners {
-		fmt.Printf("checking active runner %s, status = %s\n", runner.name, runner.status)
 		// if server is dead, remove it
 		if runner.status == serverStatusDead {
 			slog.Info("removing dead runner", "id", id)
@@ -82,7 +87,7 @@ func doCleanup(state *serverState, hetzner *hetzner, githubClient *githubClient)
 		}
 
 		// delete working server is the job began more than 55 minutes ago - it must be stuck
-		if runner.status == serverStatusWorking && runner.lastJobBeganAt.Sub(time.Now()).Abs() > (time.Minute*55) {
+		if runner.status == serverStatusWorking && time.Since(runner.lastJobBeganAt) > (time.Minute*55) {
 			slog.Info("removing runner working for more than 55 minutes", "id", id)
 			delete(state.runners, id)
 		}
@@ -93,7 +98,6 @@ func doCleanup(state *serverState, hetzner *hetzner, githubClient *githubClient)
 			limit := runner.createdAt.Add(60 * time.Minute)
 
 			for {
-				fmt.Printf("limit = %v\n", limit)
 				if limit.Compare(time.Now()) < 0 {
 					limit = limit.Add(60 * time.Minute)
 				} else {
@@ -101,8 +105,7 @@ func doCleanup(state *serverState, hetzner *hetzner, githubClient *githubClient)
 				}
 			}
 
-			fmt.Printf("idle diff = %v \n", limit.Sub(time.Now()))
-			if limit.Sub(time.Now()) < time.Minute*5 {
+			if time.Until(limit) < time.Minute*5 {
 				slog.Info("removing idle runner, approaching limit",
 					"id", id,
 					"limit", limit,
