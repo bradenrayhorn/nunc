@@ -15,7 +15,7 @@ func newHttpHandler(config config, state *serverState, hetzner *hetzner, githubC
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	})
 
 	mux.HandleFunc("/github-webhook", func(w http.ResponseWriter, r *http.Request) {
@@ -42,12 +42,12 @@ func handleCallback(
 		return err
 	}
 
-	event, err := github.ParseWebHook(github.WebHookType(r), payload)
+	anyEvent, err := github.ParseWebHook(github.WebHookType(r), payload)
 	if err != nil {
 		return err
 	}
 
-	if event, ok := event.(*github.WorkflowJobEvent); ok {
+	if event, ok := anyEvent.(*github.WorkflowJobEvent); ok {
 		labels := event.GetWorkflowJob().Labels
 		slog.Info("received webhook", "action", event.GetAction(), "labels", labels)
 

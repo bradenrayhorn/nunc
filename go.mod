@@ -1,6 +1,6 @@
 module github.com/bradenrayhorn/nunc
 
-go 1.22.1
+go 1.23
 
 require (
 	github.com/google/go-github/v66 v66.0.0
