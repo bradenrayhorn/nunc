@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	github.com/google/go-github/v66 v66.0.0
+	github.com/google/go-github/v68 v68.0.0
 	github.com/hetznercloud/hcloud-go/v2 v2.17.1
 	golang.org/x/crypto v0.31.0
 )
