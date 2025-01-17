@@ -2,6 +2,10 @@
 
 Small service to automatically deploy self-hosted GitHub runners on-demand via Hetzner server hosting.
 
+## NOTICE:
+
+This is mostly obsolete now that GitHub is [offering free public](https://github.blog/changelog/2025-01-16-linux-arm64-hosted-runners-now-available-for-free-in-public-repositories-public-preview/) ARM runners.
+
 ## Use case
 
 As of creation, GitHub does not provide arm64 based runners for individuals using GitHub actions.
