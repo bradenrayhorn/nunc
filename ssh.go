@@ -95,8 +95,8 @@ func releaseRunner(id string, state *serverState, status string) {
 }
 
 const runWorkerBash = `mkdir actions-runner && cd actions-runner && \
-curl -o actions-runner-linux-%s-2.320.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.320.0/actions-runner-linux-%s-2.320.0.tar.gz && \
-tar xzf ./actions-runner-linux-%s-2.320.0.tar.gz && \
+curl -o actions-runner-linux-%s-2.328.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-%s-2.328.0.tar.gz && \
+tar xzf ./actions-runner-linux-%s-2.328.0.tar.gz && \
 ./config.sh --unattended --url https://github.com/%s --token %s --name %s --no-default-labels --labels self-hosted,%s --ephemeral --disableupdate && \
 ./run.sh; sudo poweroff
 `
@@ -148,7 +148,7 @@ func attemptConnectAndRunWorker(runner runner, key sshKey, githubClient *githubC
 	if arch == archARM64 {
 		githubArch = "arm64"
 	} else if arch == archAMD64 {
-		githubArch = "x86"
+		githubArch = "x64"
 	}
 	cmd := fmt.Sprintf(runWorkerBash, githubArch, githubArch, githubArch, repository, token, id, arch)
 	err = session.Start(cmd)
